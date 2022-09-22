@@ -7,7 +7,8 @@ import numpy as np
 import torch
 from models.experimental import attempt_load
 from utils.datasets import LoadImages
-from utils.general import check_img_size, non_max_suppression
+from utils.general import check_img_size, non_max_suppression, apply_classifier
+from utils.torch_utils import load_classifier
 
 
 path = '../yolov7_TOP_Camera.pt'
@@ -36,6 +37,15 @@ for path, img, im0s, vid_cap in dataset:
 
     pred = model(img)[0]
     pred = non_max_suppression(pred, 0.25, 0.45, classes=None, agnostic=False, multi_label=True,)[0]
+    # Predictions from YOLOv7
+
+    modelc = load_classifier(name='resnet101', n=2)  # initialize
+
+    print(torch.load('/home/christopherwoolford/.cache/torch/hub/checkpoints/resnet101-cd907fc2.pth', map_location=torch.device('cpu')).keys())
+
+    modelc.load_state_dict(torch.load('/home/christopherwoolford/.cache/torch/hub/checkpoints/resnet101-cd907fc2.pth', map_location=torch.device('cpu'))).to(torch.device('cpu')).eval()  
+
+    pred = apply_classifier(pred, modelc, img, im0s)
 
     print(pred)
 
